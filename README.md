@@ -163,3 +163,85 @@ The expression:
     x + 1
 }
 ```
+
+# 3. References and Borrowing
+
+## 3.1. Mutable References
+
+Mutable references have one big restriction: if you have a mutable reference to a value, you can have no other
+references to that value.
+
+This code that attempts to create two mutable references to `string` will fail because we cannot borrow `string` as 
+mutable more than once at a time:
+```
+let mut string = String::from("hello");
+
+let reference_a = &mut string;
+let reference_b = &mut string;
+
+println!("{}, {}", reference_a, reference_b);
+```
+
+We can use curly brackets to create a new scope, allowing for multiple mutable references, just not simultaneous ones:
+```
+let mut string = String::from("hello");
+
+{
+    // reference_a goes out of scope here, so we can make a new reference with no problems
+    let reference_a = &mut string;
+} 
+
+let reference_b = &mut string;
+```
+
+Mutable and immutable references cannot be combined in sequence, this code will fail:
+```
+let mut string = String::from("hello");
+
+let reference_a = &string; // no problem
+let reference_b = &string; // no problem
+let reference_c = &mut string; // BIG PROBLEM
+
+println!("{}, {}, and {}", reference_a, reference_b, reference_c);
+```
+
+This code already works because `reference_a` and `reference_b` go out of scope before the declaration of `reference_c`:
+```
+let mut string = String::from("hello");
+
+let reference_a = &string; // no problem
+let reference_b = &string; // no problem
+
+// variables reference_a and reference_b will not be used after this point
+println!("{} and {}", reference_a, reference_b);
+
+let reference_c = &mut string; // no problem
+println!("{}", reference_c);
+```
+
+## 3.2. Dangling References
+
+The Rust compiler guarantees that references will never be dangling references: if you have a reference to some data, it
+will ensure that the data will not go out of scope before the reference to the data does.
+
+This code will not work because when the `dangle` function is finished it will try to return a reference for `string` which will 
+be deallocated at the end of the function:
+```
+fn main() {
+    let reference_to_nothing = dangle();
+}
+
+fn dangle() -> &String {
+    let string = String::from("hello");
+
+    &string
+}
+```
+the soluction for that is to return a `String` directly:
+``` 
+fn no_dangle() -> String {
+    let string = String::from("hello");
+
+    string
+}
+```
